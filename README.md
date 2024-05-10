@@ -1,2 +1,4 @@
-# UnderwaterSoundsClassification
- Un progetto del corso di Laurea Magistrale in Data Science e Machine Learning dell'Università degli studi di Salerno per il corso di Fondamenti di Visione Artificiale e Biometria. 
+# UnderwaterSoundsClassification 
+ A Project made for a course in Biometrics and Artficial Vision of the Data Science and Machine Learning Master Degree of the University of Salerno.
+ The project consists in studying and analyzing underwater audio data with the main goal to classify them in order to distinguish animal sound from anthropological ones.
+ 
