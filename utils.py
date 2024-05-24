@@ -96,3 +96,27 @@ def find_duplicates(df_names):
         duplicate_dict[file_name] = adjusted_indices
 
     return duplicate_dict
+
+
+def remove_rows(df_paths, df_names, txt_file, paths_file, names_file):
+    # Read the text file and split the paths
+    with open(txt_file, 'r') as f:
+        paths = f.read().split(',')
+
+    # Normalize the paths
+    paths = [os.path.normpath(path) for path in paths]
+
+    # Find the rows to remove
+    rows_to_remove = df_paths['FilePath'].isin(paths)
+
+    # Remove the rows from df_paths
+    df_paths = df_paths[~rows_to_remove]
+
+    # Remove the corresponding rows from df_names
+    df_names = df_names[~rows_to_remove]
+
+    # Save the updated DataFrames to CSV files
+    df_paths.to_csv(paths_file, index=False)
+    df_names.to_csv(names_file, index=False)
+
+    return df_paths, df_names
