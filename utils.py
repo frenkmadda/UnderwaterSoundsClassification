@@ -136,3 +136,16 @@ def extract_durations(dfpath):
         audio_durations.append(durata)
 
     return audio_durations
+
+def plot_durations(audio_durations):
+    max_duration = max(audio_durations)
+    bins = np.arange(0, max_duration + 100, 100)
+
+    # per aumentare il livello di dettaglio basta mettere bins=auto
+    plt.hist(audio_durations, bins=bins, color='blue', alpha=0.7, rwidth=0.85)
+    plt.grid(axis='y', alpha=0.75)
+    plt.xlabel('Durata audio in secondi')
+    plt.ylabel('Numero di campioni')
+    plt.title('Distribuzione delle durate degli audio')
+
+    plt.show()
