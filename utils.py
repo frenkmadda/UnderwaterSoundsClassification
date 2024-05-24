@@ -120,3 +120,19 @@ def remove_rows(df_paths, df_names, txt_file, paths_file, names_file):
     df_names.to_csv(names_file, index=False)
 
     return df_paths, df_names
+
+#Function to extract audio durations
+def extract_durations(dfpath):
+    df = pd.read_csv(dfpath)
+
+    df = df[df['FilePath'].str.endswith(('.wav', '.mp3'))]
+
+    audio_durations = []
+
+    for percorso_file in df['FilePath']:
+        audio, frequenza_campionamento = librosa.load(percorso_file)
+
+        durata = librosa.get_duration(y=audio, sr=frequenza_campionamento)
+        audio_durations.append(durata)
+
+    return audio_durations
