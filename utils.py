@@ -3,6 +3,7 @@ import librosa
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import platform
 
 
 def load_dataset(dataset_dir):
@@ -97,11 +98,13 @@ def find_duplicates(df_names):
 
     return duplicate_dict
 
-
 def remove_rows(df_paths, df_names, txt_file, paths_file, names_file):
     # Read the text file and split the paths
     with open(txt_file, 'r') as f:
         paths = f.read().split(',')
+
+    if (platform.system() != 'Windows'):
+        paths = [path.replace('\\', '/') for path in paths]
 
     # Normalize the paths
     paths = [os.path.normpath(path) for path in paths]
