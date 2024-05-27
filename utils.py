@@ -103,7 +103,9 @@ def remove_rows(df_paths, df_names, txt_file, paths_file, names_file):
     with open(txt_file, 'r') as f:
         paths = f.read().split(',')
 
-    if (platform.system() != 'Windows'):
+    if platform.system() == 'Windows':
+        paths = [path.replace('/', '\\') for path in paths]
+    else:
         paths = [path.replace('\\', '/') for path in paths]
 
     # Normalize the paths
