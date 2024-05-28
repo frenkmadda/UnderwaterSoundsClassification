@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import platform
+import soundfile as sf
+from pydub.utils import mediainfo
 
 
 def load_dataset(dataset_dir):
@@ -135,7 +137,7 @@ def extract_durations(dfpath):
     audio_durations = []
 
     for percorso_file in df['FilePath']:
-        audio, frequenza_campionamento = librosa.load(percorso_file)
+        audio, frequenza_campionamento = librosa.load(percorso_file, sr=None)
 
         durata = librosa.get_duration(y=audio, sr=frequenza_campionamento)
         audio_durations.append(durata)
@@ -154,3 +156,144 @@ def plot_durations(audio_durations):
     plt.title('Distribuzione delle durate degli audio')
 
     plt.show()
+
+# Function to extract audio files from a dataframe
+def get_audio_files(dfpath):
+    # Initialize an empty list to store the file paths
+    audio_files = []
+
+    df = pd.read_csv(dfpath)
+
+    df = df[df['FilePath'].str.endswith(('.wav', '.mp3'))]
+
+    # Traverse the directory
+    for percorso_file in df['FilePath']:
+        audio_files.append(percorso_file)
+
+    return audio_files
+
+# Function to analyze the frequencies of audio files
+def analyze_frequencies(audio_files):
+    frequencies = []
+    for file in audio_files:
+        # Load the audio file
+        y, sr = librosa.load(file, mono=True, sr=None)  # Ensure the audio is mono
+
+        # Skip if the audio is too short
+        if len(y) < 2048:
+           print(f"Skipping {file} because it's too short")
+           continue
+
+        # Compute the spectral centroid frequencies
+        spectral_centroids = librosa.feature.spectral_centroid(y=y, sr=sr)
+
+        # Append the mean frequency to the list
+        frequencies.append(spectral_centroids.mean())
+
+    return frequencies
+
+# Function to analyze the max frequencies of audio files
+def analyze_max_frequencies(audio_files):
+    max_frequencies = []
+    for file in audio_files:
+        # Load the audio file
+        y, sr = librosa.load(file, mono=True, sr=None)  # Ensure the audio is mono
+
+        # Skip if the audio is too short
+        if len(y) < 2048:
+            print(f"Skipping {file} because it's too short")
+            continue
+
+        # Compute the spectral centroid frequencies
+        spectral_centroids = librosa.feature.spectral_centroid(y=y, sr=sr)
+
+        # Append the max frequency to the list
+        max_frequencies.append(np.max(spectral_centroids))
+
+    return max_frequencies
+
+# Function to analyze the channels of audio files
+def analyze_channels(audio_files):
+    channels = []
+    two_channel_files = []
+    for file in audio_files:
+        # Read the audio file
+        data, samplerate = sf.read(file)
+
+        # Get the number of channels (2 for stereo, 1 for mono)
+        num_channels = 1 if len(data.shape) == 1 else data.shape[1]
+
+        # Append the number of channels to the list
+        channels.append(num_channels)
+
+        # If the file has 2 channels, add it to the list
+        if num_channels == 2:
+            two_channel_files.append(file)
+
+    # Print the paths of the files that have 2 channels
+    print("Files with 2 channels:")
+    for file in two_channel_files:
+        print(file)
+    
+    return channels
+
+# Function to analyze the bitrates of audio files
+def analyze_bitrate(audio_files):
+    bitrates = []
+    for file in audio_files:
+        # Get the media info of the audio file
+        info = mediainfo(file)
+
+        # Get the bitrate
+        bitrate = int(info['bit_rate'])
+
+        # Append the bitrate to the list
+        bitrates.append(bitrate)
+
+    return bitrates
+
+# Function to plot the max frequencies of audio files
+def plot_max_frequencies(max_frequencies):
+    plt.figure(figsize=(10, 6))
+    plt.hist(max_frequencies, bins='auto', color='blue', alpha=0.7, rwidth=0.85)
+    plt.grid(axis='y', alpha=0.75)
+    plt.xlabel('Max Frequency (Hz)')
+    plt.ylabel('Number of Audio Files')
+    plt.title('Distribution of Max Frequencies')
+    plt.show()
+
+# Function to plot the max frequencies of audio files using a boxplot
+def boxplot_max_frequencies(max_frequencies):
+    plt.figure(figsize=(5, 6))
+    plt.boxplot(max_frequencies)
+    plt.title('Boxplot of max frequencies')
+    plt.ylabel('Frequency')
+    plt.show()
+
+# Plot the number of channels
+def plot_channels(channels):
+    plt.figure(figsize=(10, 6))
+    counts, bins, patches = plt.hist(channels, bins=[1, 2, 3], align='left', rwidth=0.8)
+    plt.title('Number of Channels')
+    plt.xlabel('Channels')
+    plt.ylabel('Count')
+    plt.xticks([1, 2])
+
+    # Add labels to the histogram bars
+    for count, bin, patch in zip(counts, bins, patches):
+        plt.text(bin, count, str(int(count)), color='black', ha='center', va='bottom')
+
+    plt.show()
+
+# Plot the bitrates
+def plot_bitrates(bitrates):
+    plt.figure(figsize=(10, 6))
+    plt.hist(bitrates, bins='auto', color='blue', alpha=0.7, rwidth=0.85)
+    plt.grid(axis='y', alpha=0.75)
+    plt.xlabel('Bitrate (bps)')
+    plt.ylabel('Number of Audio Files')
+    plt.title('Distribution of Bitrates')
+    plt.show()
+
+                                                                       
+                                                                                     
