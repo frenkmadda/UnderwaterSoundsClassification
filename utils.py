@@ -50,6 +50,8 @@ def plotFrequencies(frequenciesTarget, frequenciesNonTarget):
 
     plt.show()
 
+
+#function to create a dataframe from the audio datasets
 def create_dataframe_from_files(dataset_dir):
     # Initialize two empty lists to store file paths and file names
     file_paths = []
@@ -147,13 +149,18 @@ def plot_durations(audio_durations):
     bins = np.arange(0, max_duration + 100, 100)
 
     # per aumentare il livello di dettaglio basta mettere bins=auto
-    plt.hist(audio_durations, bins=bins, color='blue', alpha=0.7, rwidth=0.85)
+    counts, bins, patches = plt.hist(audio_durations, bins=bins, color='blue', alpha=0.7, rwidth=0.85)
     plt.grid(axis='y', alpha=0.75)
     plt.xlabel('Durata audio in secondi')
     plt.ylabel('Numero di campioni')
     plt.title('Distribuzione delle durate degli audio')
 
+    # Aggiungi il numero di campioni su ogni classe
+    for count, bin, patch in zip(counts, bins, patches):
+        plt.text(bin, count, str(int(count)), color='black', ha='center', va='bottom',fontsize=8)
+
     plt.show()
+
 
 # Function to extract audio files from a dataframe
 def get_audio_files(dfpath):
@@ -215,29 +222,20 @@ def analyze_channels(audio_files):
     
     return channels
 
-# Function to analyze the bitrates of audio files
-def analyze_bitrate(audio_files):
-    bitrates = []
-    for file in audio_files:
-        # Get the media info of the audio file
-        info = mediainfo(file)
-
-        # Get the bitrate
-        bitrate = int(info['bit_rate'])
-
-        # Append the bitrate to the list
-        bitrates.append(bitrate)
-
-    return bitrates
 
 # Function to plot the max frequencies of audio files
 def plot_max_frequencies(max_frequencies):
     plt.figure(figsize=(10, 6))
-    plt.hist(max_frequencies, bins='auto', color='blue', alpha=0.7, rwidth=0.85)
+    counts, bins, patches = plt.hist(max_frequencies, bins='auto', color='blue', alpha=0.7, rwidth=0.85)
     plt.grid(axis='y', alpha=0.75)
     plt.xlabel('Max Frequency (Hz)')
     plt.ylabel('Number of Audio Files')
     plt.title('Distribution of Max Frequencies')
+
+    # Aggiungi il numero di file audio su ogni classe
+    for count, bin, patch in zip(counts, bins, patches):
+        plt.text(bin, count, str(int(count)), color='black', ha='center', va='bottom', fontsize=8)
+
     plt.show()
 
 # Function to plot the max frequencies of audio files using a boxplot
@@ -263,15 +261,6 @@ def plot_channels(channels):
 
     plt.show()
 
-# Plot the bitrates
-def plot_bitrates(bitrates):
-    plt.figure(figsize=(10, 6))
-    plt.hist(bitrates, bins='auto', color='blue', alpha=0.7, rwidth=0.85)
-    plt.grid(axis='y', alpha=0.75)
-    plt.xlabel('Bitrate (bps)')
-    plt.ylabel('Number of Audio Files')
-    plt.title('Distribution of Bitrates')
-    plt.show()
 
-                                                                       
+
                                                                                      
