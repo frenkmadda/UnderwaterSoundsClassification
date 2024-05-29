@@ -31,7 +31,7 @@ def extractFrequencies(audiolist):
     frequencies = []
     for audio_file in audiolist:
         # Carica il file audio con librosa
-        y, sr = librosa.load(audio_file, sr=None)
+        y, sr = librosa.load(audio_file, mono=True, sr=None)
         frequencies.append(sr)
     return frequencies
 
@@ -182,7 +182,7 @@ def analyze_max_frequencies(audio_files):
     max_frequencies = []
     for file in audio_files:
         # Load the audio file
-        y, sr = librosa.load(file, sr=None)  # Ensure the audio is mono
+        y, sr = librosa.load(file, mono=True, sr=None)  # Ensure the audio is mono
 
         # Skip if the audio is too short
         if len(y) < 2048:
@@ -260,7 +260,3 @@ def plot_channels(channels):
         plt.text(bin, count, str(int(count)), color='black', ha='center', va='bottom')
 
     plt.show()
-
-
-
-                                                                                     
