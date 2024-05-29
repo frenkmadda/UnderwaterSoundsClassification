@@ -26,14 +26,25 @@ def load_dataset(dataset_dir):
 
     return audio_files
 
+
 #function to extract sampling rates given an audio lists
-def extractFrequencies(audiolist):
-    frequencies = []
-    for audio_file in audiolist:
-        # Carica il file audio con librosa
-        y, sr = librosa.load(audio_file, mono=True, sr=None)
-        frequencies.append(sr)
-    return frequencies
+def get_frequencies(dfpath):
+    df = pd.read_csv(dfpath)
+    df = df[df['FilePath'].str.endswith(('.wav', '.mp3'))]
+
+    frequencies_target = []
+    frequencies_non_target = []
+
+    for percorso_file in df['FilePath']:
+        audio, sr = librosa.load(percorso_file, sr=None)
+
+        if 'Non-Target' in percorso_file:
+            frequencies_non_target.append(sr)
+        else:
+            frequencies_target.append(sr)
+
+    return frequencies_target, frequencies_non_target
+
 
 
 #Function to plot frequencies given two frequencies lists
@@ -157,7 +168,7 @@ def plot_durations(audio_durations):
 
     # Aggiungi il numero di campioni su ogni classe
     for count, bin, patch in zip(counts, bins, patches):
-        plt.text(bin, count, str(int(count)), color='black', ha='center', va='bottom',fontsize=8)
+        plt.text(bin, count, str(int(count)), color='black', ha='left', va='bottom',fontsize=8)
 
     plt.show()
 
@@ -234,7 +245,7 @@ def plot_max_frequencies(max_frequencies):
 
     # Aggiungi il numero di file audio su ogni classe
     for count, bin, patch in zip(counts, bins, patches):
-        plt.text(bin, count, str(int(count)), color='black', ha='center', va='bottom', fontsize=8)
+        plt.text(bin, count, str(int(count)), color='black', ha='left', va='bottom', fontsize=8)
 
     plt.show()
 
