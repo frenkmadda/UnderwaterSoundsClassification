@@ -50,8 +50,6 @@ def plotFrequencies(frequenciesTarget, frequenciesNonTarget):
 
     plt.show()
 
-
-#function to create a dataframe from the audio datasets
 def create_dataframe_from_files(dataset_dir):
     # Initialize two empty lists to store file paths and file names
     file_paths = []
@@ -60,8 +58,8 @@ def create_dataframe_from_files(dataset_dir):
     # Walk through the directory
     for root, dirs, files in os.walk(dataset_dir):
         for file in files:
-            # Exclude .DS_Store and .csv files
-            if file != '.DS_Store' and not file.endswith('.csv'):
+            # Include only .mp3 and .wav files
+            if file.endswith('.mp3') or file.endswith('.wav'):
                 # Get the full file path
                 file_path = os.path.join(root, file)
                 # Append the file path and the file name to the respective lists
@@ -172,32 +170,12 @@ def get_audio_files(dfpath):
 
     return audio_files
 
-# Function to analyze the frequencies of audio files
-def analyze_frequencies(audio_files):
-    frequencies = []
-    for file in audio_files:
-        # Load the audio file
-        y, sr = librosa.load(file, mono=True, sr=None)  # Ensure the audio is mono
-
-        # Skip if the audio is too short
-        if len(y) < 2048:
-           print(f"Skipping {file} because it's too short")
-           continue
-
-        # Compute the spectral centroid frequencies
-        spectral_centroids = librosa.feature.spectral_centroid(y=y, sr=sr)
-
-        # Append the mean frequency to the list
-        frequencies.append(spectral_centroids.mean())
-
-    return frequencies
-
 # Function to analyze the max frequencies of audio files
 def analyze_max_frequencies(audio_files):
     max_frequencies = []
     for file in audio_files:
         # Load the audio file
-        y, sr = librosa.load(file, mono=True, sr=None)  # Ensure the audio is mono
+        y, sr = librosa.load(file, sr=None)  # Ensure the audio is mono
 
         # Skip if the audio is too short
         if len(y) < 2048:
