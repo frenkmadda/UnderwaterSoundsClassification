@@ -236,18 +236,21 @@ def analyze_channels(audio_files):
 
 # Function to plot the max frequencies of audio files
 def plot_max_frequencies(max_frequencies):
-    plt.figure(figsize=(10, 6))
-    counts, bins, patches = plt.hist(max_frequencies, bins='auto', color='blue', alpha=0.7, rwidth=0.85)
+    plt.figure(figsize=(10, 30))
+
+    counts, bins, patches = plt.hist(max_frequencies, bins='auto', color='blue', alpha=0.7, rwidth=0.85,
+                                     orientation='horizontal')
     plt.grid(axis='y', alpha=0.75)
-    plt.xlabel('Max Frequency (Hz)')
-    plt.ylabel('Number of Audio Files')
+    plt.xlabel('Number of Audio Files')
+    plt.ylabel('Max Frequency (Hz)')
     plt.title('Distribution of Max Frequencies')
 
     # Aggiungi il numero di file audio su ogni classe
     for count, bin, patch in zip(counts, bins, patches):
-        plt.text(bin, count, str(int(count)), color='black', ha='left', va='bottom', fontsize=8)
+        plt.text(count, bin, str(int(count)), color='black', ha='left', va='center', fontsize=8)
 
     plt.show()
+
 
 # Function to plot the max frequencies of audio files using a boxplot
 def boxplot_max_frequencies(max_frequencies):
@@ -256,6 +259,7 @@ def boxplot_max_frequencies(max_frequencies):
     plt.title('Boxplot of max frequencies')
     plt.ylabel('Frequency')
     plt.show()
+
 
 # Plot the number of channels
 def plot_channels(channels):
