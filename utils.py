@@ -247,7 +247,7 @@ def plot_max_frequencies(max_frequencies):
 
     # Aggiungi il numero di file audio su ogni classe
     for count, bin, patch in zip(counts, bins, patches):
-        plt.text(count, bin, str(int(count)), color='black', ha='left', va='center', fontsize=8)
+        plt.text(count, bin, str(int(count)), color='black', ha='left', va='bottom', fontsize=8)
 
     plt.show()
 
