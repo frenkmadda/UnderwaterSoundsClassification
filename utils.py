@@ -271,3 +271,44 @@ def plot_channels(channels):
         plt.text(bin, count, str(int(count)), color='black', ha='center', va='bottom')
 
     plt.show()
+
+
+def plot_class_distribution(df, class_column):
+    # Calcola la distribuzione delle classi
+    class_distribution = df[class_column].value_counts()
+
+    # Crea un plot a barre della distribuzione delle classi
+    plt.figure(figsize=(30, 10))
+    class_distribution.plot(kind='bar')
+    plt.xlabel('Class')
+    plt.ylabel('Count')
+    plt.title('Class Distribution')
+    plt.show()
+
+
+def plot_class_distribution_horizontal(df, class_column):
+    # Calculate the class distribution
+    class_distribution = df[class_column].value_counts()
+
+    # Sort the class distribution in descending order
+    class_distribution = class_distribution.sort_values(ascending=True)
+
+    # Create a horizontal bar plot of the class distribution
+    plt.figure(figsize=(10, 30))
+
+    # Color the bars based on the class
+    # bar_colors = ['red' if x == 'Target' else 'blue' for x in class_distribution.index]
+
+    class_distribution.plot(kind='barh',  width=0.8)  # Increase the width of the bars
+
+    # Add the count of instances next to each bar, aligned vertically in the center
+    for index, value in enumerate(class_distribution):
+        plt.text(value + 1, index, str(value), va='center')
+
+    plt.xlabel('Count')
+    plt.ylabel('Class')
+    plt.title('Class Distribution')
+    plt.show()
+
+
+
