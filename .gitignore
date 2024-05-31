@@ -153,3 +153,8 @@ cython_debug/
 .DS_Store
 Dataset
 
+Dataset/df_names.csv
+Dataset/df_paths.csv
+Dataset/duplicate.txt
+Dataset/duplicate_indices.json
+
