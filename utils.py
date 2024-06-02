@@ -236,18 +236,23 @@ def analyze_channels(audio_files):
 
 # Function to plot the max frequencies of audio files
 def plot_max_frequencies(max_frequencies):
+    # Create a horizontal bar plot of the max frequencies
     plt.figure(figsize=(10, 30))
 
-    counts, bins, patches = plt.hist(max_frequencies, bins='auto', color='blue', alpha=0.7, rwidth=0.85,
-                                     orientation='horizontal')
+    counts, bins = np.histogram(max_frequencies, bins='auto')
+    y = [(bins[i] + bins[i+1]) / 2 for i in range(len(bins) - 1)]  # Calculate the y position for the text
+
+    plt.barh(y, counts, height=np.diff(bins)*0.8, align='center', color='blue', alpha=0.7)  # Reduce the bar width by 50%
+
     plt.grid(axis='y', alpha=0.75)
     plt.xlabel('Number of Audio Files')
     plt.ylabel('Max Frequency (Hz)')
     plt.title('Distribution of Max Frequencies')
 
-    # Aggiungi il numero di file audio su ogni classe
-    for count, bin, patch in zip(counts, bins, patches):
-        plt.text(count, bin, str(int(count)), color='black', ha='left', va='bottom', fontsize=8)
+    # Add the count of instances next to each bar, aligned vertically in the center
+    for count, bin in zip(counts, y):
+        if count > 0:  # Add the text only if the count is greater than 0
+            plt.text(count, bin, str(int(count)), va='center', ha='left')
 
     plt.show()
 
