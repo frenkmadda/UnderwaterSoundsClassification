@@ -72,7 +72,7 @@ def create_dataframe_from_files(dataset_dir):
     for root, dirs, files in os.walk(dataset_dir):
         for file in files:
             # Include only .mp3 and .wav files
-            if file.endswith('.mp3') or file.endswith('.wav'):
+            if file.endswith('.mp3') or file.endswith('.wav') or file.endswith('.png'):
                 # Get the full file path
                 file_path = os.path.join(root, file)
                 # Append the file path and the file name to the respective lists
