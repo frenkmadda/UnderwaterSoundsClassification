@@ -57,7 +57,7 @@ def calculate_ssim_for_image_pairs(csv_path, num_workers=5):
     return results_df
 
 
-ssim_results = calculate_ssim_for_image_pairs('Spettrogrammi/Target/df_paths_filtered_cropped.csv')
+ssim_results = calculate_ssim_for_image_pairs('Spettrogrammi/Target/df_paths_filtered.csv')
 pd.set_option('display.max_rows', None)
 ssim_results.to_csv('Spettrogrammi/Target/ssim_results.csv', index=False)
 
