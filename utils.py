@@ -93,6 +93,11 @@ def create_dataframe_from_files(dataset_dir):
 
 #Function to find and extract duplicated audios
 def find_duplicates(df_names):
+    """
+    Find duplicate file names in the DataFrame and return a dictionary with the duplicate file names and their indices.
+    :param df_names: dataframe with the file names
+    :return: dictionary with the duplicate file names and their indices
+    """
     # Reset the index of the DataFrame
     df_names = df_names.reset_index(drop=True)
 
@@ -111,8 +116,17 @@ def find_duplicates(df_names):
 
     return duplicate_dict
 
+
 def remove_rows(df_paths, df_names, txt_file, paths_file, names_file):
-    # Read the text file and split the paths
+    """
+    Remove rows from the DataFrames based on the file paths in the text file and save the updated DataFrames to CSV files.
+    :param df_paths: dataframe with the file paths
+    :param df_names: dataframe with the file names
+    :param txt_file:
+    :param paths_file:
+    :param names_file:
+    :return: the new DataFrames
+    """
     with open(txt_file, 'r') as f:
         paths = f.read().split(',')
 
@@ -121,26 +135,26 @@ def remove_rows(df_paths, df_names, txt_file, paths_file, names_file):
     else:
         paths = [path.replace('\\', '/') for path in paths]
 
-    # Normalize the paths
     paths = [os.path.normpath(path) for path in paths]
 
-    # Find the rows to remove
     rows_to_remove = df_paths['FilePath'].isin(paths)
 
-    # Remove the rows from df_paths
     df_paths = df_paths[~rows_to_remove]
 
-    # Remove the corresponding rows from df_names
     df_names = df_names[~rows_to_remove]
 
-    # Save the updated DataFrames to CSV files
     df_paths.to_csv(paths_file, index=False)
     df_names.to_csv(names_file, index=False)
 
     return df_paths, df_names
 
-#Function to extract audio durations
+
 def extract_durations(dfpath):
+    """
+    Extract the durations of audio files from a DataFrame.
+    :param dfpath: the dataframe path
+    :return: list of audio durations
+    """
     df = pd.read_csv(dfpath)
 
     df = df[df['FilePath'].str.endswith(('.wav', '.mp3'))]
@@ -155,7 +169,13 @@ def extract_durations(dfpath):
 
     return audio_durations
 
+
 def plot_durations(audio_durations):
+    """
+    Plot the distribution of audio durations.
+    :param audio_durations: list of audio durations
+    :return: none
+    """
     max_duration = max(audio_durations)
     bins = np.arange(0, max_duration + 100, 100)
 
@@ -318,6 +338,8 @@ def plot_class_distribution_horizontal(df, class_column):
     plt.ylabel('Class')
     plt.title('Class Distribution')
     plt.show()
+
+
 
 
 
