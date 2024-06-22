@@ -649,5 +649,4 @@ def filter_csv(class_num_csv, csv_to_filter, output_di_file):
     elif platform.system() == 'Darwin':
         df_paths['Classe'] = df_paths['FilePath'].apply(lambda x: x.split('/')[2])
     df_paths_filtered = df_paths[df_paths['Classe'].isin(df_filtered['Classe'])]
-    df_paths_filtered = df_paths_filtered.drop(columns=['Classe'])
     df_paths_filtered.to_csv(output_di_file, index=False)
