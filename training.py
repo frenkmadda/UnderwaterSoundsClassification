@@ -134,8 +134,6 @@ if __name__ == "__main__":
     weights = 'IMAGENET1K_V1'
 
     parameters = {
-        'train_csv_file': train_csv_file,
-        'val_csv_file': val_csv_file,
         'path_model': path_model,
         'batch_size': batch_size,
         'num_epochs': num_epochs,
@@ -147,11 +145,10 @@ if __name__ == "__main__":
         'weights': weights
     }
 
-    write_parameters_to_txt(parameters, f'{path_model}/parameters.txt')
-
-
     if not os.path.exists(path_model):
         os.makedirs(path_model)
+
+    write_parameters_to_txt(parameters, f'{path_model}/parameters.txt')
 
     # Creazione dei dataset e dataloader con le trasformazioni necessarie
     data_transforms = {
