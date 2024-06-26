@@ -33,7 +33,7 @@ class SpectrogramDataset(Dataset):
         return image, label
 
 # Funzione di training
-def train_model(model, dataloaders, criterion, optimizer, num_epochs=25, patience=5):
+def train_model(model, dataloaders, criterion, optimizer, average, num_epochs=25, patience=5):
     best_model_wts = model.state_dict()
     best_loss = float('inf')
     early_stopping_counter = 0
@@ -79,9 +79,9 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25, patienc
 
             epoch_loss = running_loss / len(dataloaders[phase].dataset)
             epoch_acc = running_corrects.float() / len(dataloaders[phase].dataset)
-            precision = precision_score(all_labels, all_preds, average='binary')
-            recall = recall_score(all_labels, all_preds, average='binary')
-            f1 = f1_score(all_labels, all_preds, average='binary')
+            precision = precision_score(all_labels, all_preds, average=average)
+            recall = recall_score(all_labels, all_preds, average=average)
+            f1 = f1_score(all_labels, all_preds, average=average)
 
             print(f'{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f} Precision: {precision:.4f} Recall: {recall:.4f} F1: {f1:.4f}')
 
@@ -112,15 +112,42 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25, patienc
     model.load_state_dict(best_model_wts)
     return model, pd.DataFrame(metrics)
 
+def write_parameters_to_txt(params, filename):
+    with open(filename, 'w') as f:
+        for key in params:
+            f.write(f"{key}: {params[key]}\n")
+
 if __name__ == "__main__":
     # Parametri
     train_csv_file = 'final_dataset/training/df_paths_train.csv'
     val_csv_file = 'final_dataset/validation/df_paths_val.csv'
-    path_model = 'models/test1_google_net'
+    name_test = 'test2_google_net'
+    path_model = f'models/{name_test}'
     batch_size = 32
     num_epochs = 50
     patience = 5
     learning_rate = 0.001
+    classes = 2
+    average = 'weighted'
+    model_used = 'GoogLeNet'
+    weights = 'IMAGENET1K_V1'
+
+    parameters = {
+        'train_csv_file': train_csv_file,
+        'val_csv_file': val_csv_file,
+        'path_model': path_model,
+        'batch_size': batch_size,
+        'num_epochs': num_epochs,
+        'patience': patience,
+        'learning_rate': learning_rate,
+        'classes': classes,
+        'average': average,
+        'model_used': model_used,
+        'weights': weights
+    }
+
+    write_parameters_to_txt(parameters, f'{path_model}/parameters.txt')
+
 
     if not os.path.exists(path_model):
         os.makedirs(path_model)
@@ -151,7 +178,7 @@ if __name__ == "__main__":
     # Inizializzazione del modello GoogLeNet pre-addestrato
     model = models.googlenet(weights=GoogLeNet_Weights.IMAGENET1K_V1)
     num_ftrs = model.fc.in_features
-    model.fc = nn.Linear(num_ftrs, 2)  # 2 classi: target e non-target
+    model.fc = nn.Linear(num_ftrs, classes)  # 2 classi: target e non-target
 
     # Spostare il modello sul dispositivo
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
@@ -161,10 +188,10 @@ if __name__ == "__main__":
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     # Addestramento del modello
-    model, metrics_df = train_model(model, dataloaders, criterion, optimizer, num_epochs=num_epochs, patience=patience)
+    model, metrics_df = train_model(model, dataloaders, criterion, optimizer, average, num_epochs=num_epochs, patience=patience)
 
     # Salvataggio del modello migliore
     torch.save(model.state_dict(), f'{path_model}/best_model.pt')
 
     # Salvataggio delle metriche
-    metrics_df.to_csv('results/training_metrics.csv', index=False)
+    metrics_df.to_csv(f'results/{name_test}.csv', index=False)
