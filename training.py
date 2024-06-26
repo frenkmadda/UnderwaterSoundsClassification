@@ -10,7 +10,7 @@ from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_sc
 import numpy as np
 from tqdm import tqdm
 from torchvision import models, transforms
-from torchvision.models import GoogLeNet_Weights
+from torchvision.models import GoogLeNet_Weights, AlexNet_Weights
 import platform
 
 # Dataset personalizzato
@@ -173,10 +173,14 @@ if __name__ == "__main__":
         'val': DataLoader(image_datasets['val'], batch_size=batch_size, shuffle=False, num_workers=4)
     }
 
-    # Inizializzazione del modello GoogLeNet pre-addestrato
-    model = models.googlenet(weights=GoogLeNet_Weights.IMAGENET1K_V1)
-    num_ftrs = model.fc.in_features
-    model.fc = nn.Linear(num_ftrs, classes)  # 2 classi: target e non-target
+    if model_used == 'GoogLeNet':
+        model = models.googlenet(weights=GoogLeNet_Weights.IMAGENET1K_V1)
+        num_ftrs = model.fc.in_features
+        model.fc = nn.Linear(num_ftrs, classes)  # 2 classi: target e non-target
+    elif model_used == 'AlexNet':
+        model = models.alexnet(weights=AlexNet_Weights.IMAGENET1K_V1)
+        num_ftrs = model.classifier[6].in_features
+        model.classifier[6] = nn.Linear(num_ftrs, classes)
 
     # Spostare il modello sul dispositivo
     if platform.system() == 'Windows':
