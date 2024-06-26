@@ -11,6 +11,7 @@ import numpy as np
 from tqdm import tqdm
 from torchvision import models, transforms
 from torchvision.models import GoogLeNet_Weights
+import platform
 
 # Dataset personalizzato
 class SpectrogramDataset(Dataset):
@@ -181,7 +182,11 @@ if __name__ == "__main__":
     model.fc = nn.Linear(num_ftrs, classes)  # 2 classi: target e non-target
 
     # Spostare il modello sul dispositivo
-    device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+    if platform.system() == 'Windows':
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    else:
+        device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+
     model = model.to(device)
 
     criterion = nn.CrossEntropyLoss()
