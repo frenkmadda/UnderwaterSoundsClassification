@@ -15,9 +15,12 @@ import platform
 
 # Dataset personalizzato
 class SpectrogramDataset(Dataset):
-    def __init__(self, csv_file, transform=None):
-        self.data_frame = pd.read_csv(csv_file, usecols=['FilePath', 'Label'])
-        self.data_frame['Label'] = self.data_frame['Label'].apply(lambda x: 1 if x == 'Target' else 0)
+    def __init__(self, csv_file, classes, transform=None):
+        if classes == 2:
+            self.data_frame = pd.read_csv(csv_file, usecols=['FilePath', 'Label'])
+            self.data_frame['Label'] = self.data_frame['Label'].apply(lambda x: 1 if x == 'Target' else 0)
+        else:
+            self.data_frame = pd.read_csv(csv_file, usecols=['FilePath', 'Classe'])
         self.transform = transform
 
     def __len__(self):
@@ -128,7 +131,7 @@ if __name__ == "__main__":
     num_epochs = 50
     patience = 5
     learning_rate = 0.001
-    classes = 2
+    classes = 2 # 2 o 38
     average = 'weighted'
     model_used = 'GoogLeNet'
     weights = 'IMAGENET1K_V1'
@@ -165,8 +168,8 @@ if __name__ == "__main__":
     }
 
     image_datasets = {
-        'train': SpectrogramDataset(train_csv_file, transform=data_transforms['train']),
-        'val': SpectrogramDataset(val_csv_file, transform=data_transforms['val'])
+        'train': SpectrogramDataset(train_csv_file, classes, transform=data_transforms['train']),
+        'val': SpectrogramDataset(val_csv_file, classes, transform=data_transforms['val'])
     }
     dataloaders = {
         'train': DataLoader(image_datasets['train'], batch_size=batch_size, shuffle=True, num_workers=4),
@@ -176,7 +179,7 @@ if __name__ == "__main__":
     if model_used == 'GoogLeNet':
         model = models.googlenet(weights=GoogLeNet_Weights.IMAGENET1K_V1)
         num_ftrs = model.fc.in_features
-        model.fc = nn.Linear(num_ftrs, classes)  # 2 classi: target e non-target
+        model.fc = nn.Linear(num_ftrs, classes)
     elif model_used == 'AlexNet':
         model = models.alexnet(weights=AlexNet_Weights.IMAGENET1K_V1)
         num_ftrs = model.classifier[6].in_features
