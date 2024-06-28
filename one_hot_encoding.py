@@ -45,7 +45,7 @@ class SpectrogramDataset(Dataset):
 
         return image, label
 
-def train_model(model, dataloaders, criterion, optimizer, average, num_classes, num_epochs=25, patience=5):
+def train_model(model, dataloaders, criterion, optimizer, num_classes, num_epochs=25, patience=5):
     best_model_wts = model.state_dict()
     best_loss = float('inf')
     early_stopping_counter = 0
@@ -98,9 +98,9 @@ def train_model(model, dataloaders, criterion, optimizer, average, num_classes, 
 
             epoch_loss = running_loss / len(dataloaders[phase].dataset)
             epoch_acc = running_corrects.float() / len(dataloaders[phase].dataset)
-            precision = precision_score(all_labels, all_preds, average=average)
-            recall = recall_score(all_labels, all_preds, average=average)
-            f1 = f1_score(all_labels, all_preds, average=average)
+            precision = precision_score(all_labels, all_preds)
+            recall = recall_score(all_labels, all_preds)
+            f1 = f1_score(all_labels, all_preds)
 
             print(f'{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f} Precision: {precision:.4f} Recall: {recall:.4f} F1: {f1:.4f}')
 
@@ -133,17 +133,17 @@ def train_model(model, dataloaders, criterion, optimizer, average, num_classes, 
 
 if __name__ == "__main__":
     # Parametri
-    train_csv_file = 'final_dataset/training/df_paths_train.csv'
+    train_csv_file = 'final_dataset/training/df_paths_train_clean.csv'
     val_csv_file = 'final_dataset/validation/df_paths_val.csv'
-    name_test = 'test11_alex_net_one_hot'
+    name_test = 'test13_res_net_one_hot'
     path_model = f'models/{name_test}'
-    batch_size = 32
+    batch_size = 64
     num_epochs = 50
     patience = 5
     learning_rate = 0.001
     classes = 38  # 2 o 38
-    average = 'weighted'
-    model_used = 'AlexNet'
+    average = 'binary'
+    model_used = 'resnet50'
     weights = 'IMAGENET1K_V1'
 
     parameters = {
@@ -194,6 +194,10 @@ if __name__ == "__main__":
         model = models.alexnet(weights=AlexNet_Weights.IMAGENET1K_V1)
         num_ftrs = model.classifier[6].in_features
         model.classifier[6] = nn.Linear(num_ftrs, classes)
+    elif model_used == 'resnet50':
+        model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
+        num_ftrs = model.fc.in_features
+        model.fc = nn.Linear(num_ftrs, classes)
 
     # Spostare il modello sul dispositivo
     if platform.system() == 'Windows':
@@ -207,7 +211,7 @@ if __name__ == "__main__":
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     # Addestramento del modello
-    model, metrics_df = train_model(model, dataloaders, criterion, optimizer, average, classes, num_epochs=num_epochs, patience=patience)
+    model, metrics_df = train_model(model, dataloaders, criterion, optimizer, classes, num_epochs=num_epochs, patience=patience)
 
     # Salvataggio del modello migliore
     torch.save(model.state_dict(), f'{path_model}/best_model.pt')
