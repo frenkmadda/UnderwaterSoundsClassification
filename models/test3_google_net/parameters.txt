@@ -1,9 +1,0 @@
-path_model: models/test3_google_net
-batch_size: 32
-num_epochs: 50
-patience: 5
-learning_rate: 0.001
-classes: 2
-average: macro
-model_used: GoogLeNet
-weights: IMAGENET1K_V1
