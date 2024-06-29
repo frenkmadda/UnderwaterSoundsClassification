@@ -15,16 +15,9 @@ import platform
 
 # Dataset personalizzato
 class SpectrogramDataset(Dataset):
-    def __init__(self, csv_file, classes, transform=None):
-        self.classes = classes
-
-        if classes == 2:
-            self.data_frame = pd.read_csv(csv_file, usecols=['FilePath', 'Label'])
-            self.data_frame['Label'] = self.data_frame['Label'].apply(lambda x: 1 if x == 'Target' else 0)
-        else:
-            self.data_frame = pd.read_csv(csv_file, usecols=['FilePath', 'Classe'])
-            self.class_to_idx = {cls: idx for idx, cls in enumerate(self.data_frame['Classe'].unique())}
-
+    def __init__(self, csv_file, transform=None):
+        self.data_frame = pd.read_csv(csv_file, usecols=['FilePath', 'Label'])
+        self.data_frame['Label'] = self.data_frame['Label'].apply(lambda x: 1 if x == 'Target' else 0)
         self.transform = transform
 
     def __len__(self):
@@ -33,12 +26,7 @@ class SpectrogramDataset(Dataset):
     def __getitem__(self, idx):
         img_name = self.data_frame.iloc[idx, 0]
         image = Image.open(img_name).convert('RGB')  # Convertire l'immagine in RGB
-
-        if self.classes == 2:
-            label = int(self.data_frame.iloc[idx, 1])
-        else:
-            class_name = self.data_frame.iloc[idx, 1]
-            label = self.class_to_idx[class_name]
+        label = int(self.data_frame.iloc[idx, 1])
 
         if self.transform:
             image = self.transform(image)
@@ -134,15 +122,15 @@ if __name__ == "__main__":
     # Parametri
     train_csv_file = 'final_dataset/training/df_paths_train.csv'
     val_csv_file = 'final_dataset/validation/df_paths_val.csv'
-    name_test = 'test8_google_net'
+    name_test = 'test99_alex_net'
     path_model = f'models/{name_test}'
     batch_size = 32
     num_epochs = 50
     patience = 5
     learning_rate = 0.001
-    classes = 38 # 2 o 38
+    classes = 2
     average = 'weighted'
-    model_used = 'GoogLeNet'
+    model_used = 'AlexNet'
     weights = 'IMAGENET1K_V1'
 
     parameters = {
@@ -177,8 +165,8 @@ if __name__ == "__main__":
     }
 
     image_datasets = {
-        'train': SpectrogramDataset(train_csv_file, classes, transform=data_transforms['train']),
-        'val': SpectrogramDataset(val_csv_file, classes, transform=data_transforms['val'])
+        'train': SpectrogramDataset(train_csv_file, transform=data_transforms['train']),
+        'val': SpectrogramDataset(val_csv_file, transform=data_transforms['val'])
     }
     dataloaders = {
         'train': DataLoader(image_datasets['train'], batch_size=batch_size, shuffle=True, num_workers=4),
@@ -188,7 +176,7 @@ if __name__ == "__main__":
     if model_used == 'GoogLeNet':
         model = models.googlenet(weights=GoogLeNet_Weights.IMAGENET1K_V1)
         num_ftrs = model.fc.in_features
-        model.fc = nn.Linear(num_ftrs, classes)
+        model.fc = nn.Linear(num_ftrs, classes)  # 2 classi: target e non-target
     elif model_used == 'AlexNet':
         model = models.alexnet(weights=AlexNet_Weights.IMAGENET1K_V1)
         num_ftrs = model.classifier[6].in_features
