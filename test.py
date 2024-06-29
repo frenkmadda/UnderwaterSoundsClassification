@@ -61,11 +61,14 @@ class CustomDataset(Dataset):
 
 
 
-def load_model(model_path, device):
-    # ResNet50 e GoogleNet ---
-    #model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT) #modello resnet50
+def load_model(model_path, device): #CAMBIA QUI IL MODELLO DA USARE IL NUMERO DI FEATURES
+    # ResNet50  ---
+    #model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
+    #model.fc = nn.Linear(model.fc.in_features, 2)
+    #GoogleNet
     model = models.googlenet(weights=GoogLeNet_Weights.IMAGENET1K_V1) #modello googlenet
     model.fc = nn.Linear(model.fc.in_features, 2)
+    # AlexNet ---
     #model = models.alexnet(weights=AlexNet_Weights.IMAGENET1K_V1)
     #num_ftrs = model.classifier[6].in_features
     #model.classifier[6] = nn.Linear(num_ftrs, 38)
@@ -85,7 +88,7 @@ test_dataset_path = 'final_dataset/test/df_paths_test.csv'  # Update with actual
 test_dataset = CustomDataset(test_dataset_path, transform=transform)
 test_loader = DataLoader(test_dataset, batch_size=32, shuffle=True, pin_memory=True)
 
-model_path = 'models/test4_google_net/checkpoint_epoch_1.pt'  # da cambiare
+model_path = 'models/test4_google_net/checkpoint_epoch_1.pt'  # CAMBIA QUI IL MODELLO DA USARE
 model = load_model(model_path, device)
 model.eval()
 
@@ -118,7 +121,7 @@ test_accuracy, test_precision, test_recall, test_f1 = calculate_metrics(all_labe
 
 # Creazione del file CSV nella directory dei checkpoint
 checkpoint_dir = 'test_results/'  # Update with actual path
-csv_output_path = os.path.join(checkpoint_dir, 'test4_results.csv') #risultati file
+csv_output_path = os.path.join(checkpoint_dir, 'test4_results.csv') #   CAMBIA QUI IL NOME DEL FILE DEI RISULTATI
 with open(csv_output_path, 'w', newline='') as csvfile:
     fieldnames = ['test_loss', 'test_accuracy', 'test_precision', 'test_recall', 'test_f1']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
