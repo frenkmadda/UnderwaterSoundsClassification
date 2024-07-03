@@ -1,6 +1,5 @@
 import os
 import wave
-import gc
 import librosa
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,7 +7,6 @@ import pandas as pd
 import platform
 import soundfile as sf
 from pydub import AudioSegment
-from pydub.utils import mediainfo
 import csv
 from collections import defaultdict
 

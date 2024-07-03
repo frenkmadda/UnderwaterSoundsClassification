@@ -13,8 +13,15 @@ from torchvision import models, transforms
 from torchvision.models import GoogLeNet_Weights, AlexNet_Weights
 import platform
 
-# Dataset personalizzato
 class SpectrogramDataset(Dataset):
+    """
+    Class for loading spectrogram images and their labels from a CSV file
+
+    :param csv_file: path to the CSV file containing the file paths and labels
+    :param transform: optional transform to be applied on a sample.
+
+    :return: image, label
+    """
     def __init__(self, csv_file, transform=None):
         self.data_frame = pd.read_csv(csv_file, usecols=['FilePath', 'Label'])
         self.data_frame['Label'] = self.data_frame['Label'].apply(lambda x: 1 if x == 'Target' else 0)
@@ -25,7 +32,7 @@ class SpectrogramDataset(Dataset):
 
     def __getitem__(self, idx):
         img_name = self.data_frame.iloc[idx, 0]
-        image = Image.open(img_name).convert('RGB')  # Convertire l'immagine in RGB
+        image = Image.open(img_name).convert('RGB')
         label = int(self.data_frame.iloc[idx, 1])
 
         if self.transform:
@@ -33,8 +40,20 @@ class SpectrogramDataset(Dataset):
 
         return image, label
 
-# Funzione di training
 def train_model(model, dataloaders, criterion, optimizer, average, num_epochs=25, patience=5):
+    """
+    Train the model and apply early stopping.
+
+    :param model: The model to train
+    :param dataloaders: A dictionary containing the training and validation dataloaders
+    :param criterion: The loss function
+    :param optimizer: The optimizer for training the model
+    :param average: The type of averaging to use for the metrics
+    :param num_epochs: The maximum number of epochs to train the model
+    :param patience: The number of epochs to wait before stopping training if the loss does not decrease
+
+    :return: The best model and a DataFrame containing the metrics for each epoch
+    """
     best_model_wts = model.state_dict()
     best_loss = float('inf')
     early_stopping_counter = 0
@@ -49,9 +68,9 @@ def train_model(model, dataloaders, criterion, optimizer, average, num_epochs=25
 
         for phase in ['train', 'val']:
             if phase == 'train':
-                model.train()  # Imposta il modello in modalità training
+                model.train()
             else:
-                model.eval()  # Imposta il modello in modalità evaluation
+                model.eval()
 
             running_loss = 0.0
             running_corrects = 0
@@ -114,16 +133,24 @@ def train_model(model, dataloaders, criterion, optimizer, average, num_epochs=25
     return model, pd.DataFrame(metrics)
 
 def write_parameters_to_txt(params, filename):
+    """
+    Write the model parameters to a text file
+
+    :param params: Dictionary containing the model parameters
+    :param filename: The filename where the parameters will be saved.
+
+    :return: None
+    """
     with open(filename, 'w') as f:
         for key in params:
             f.write(f"{key}: {params[key]}\n")
 
 if __name__ == "__main__":
     # Parametri
-    train_csv_file = 'final_dataset/training/df_paths_train.csv'
-    val_csv_file = 'final_dataset/validation/df_paths_val.csv'
+    train_csv_file = '../final_dataset/training/df_paths_train.csv'
+    val_csv_file = '../final_dataset/validation/df_paths_val.csv'
     name_test = 'test99_alex_net'
-    path_model = f'models/{name_test}'
+    path_model = f'../models/{name_test}'
     batch_size = 32
     num_epochs = 50
     patience = 5
@@ -150,7 +177,6 @@ if __name__ == "__main__":
 
     write_parameters_to_txt(parameters, f'{path_model}/parameters.txt')
 
-    # Creazione dei dataset e dataloader con le trasformazioni necessarie
     data_transforms = {
         'train': transforms.Compose([
             transforms.Resize((224, 224)),
@@ -176,13 +202,12 @@ if __name__ == "__main__":
     if model_used == 'GoogLeNet':
         model = models.googlenet(weights=GoogLeNet_Weights.IMAGENET1K_V1)
         num_ftrs = model.fc.in_features
-        model.fc = nn.Linear(num_ftrs, classes)  # 2 classi: target e non-target
+        model.fc = nn.Linear(num_ftrs, classes)  # 2 classes: target e non-target
     elif model_used == 'AlexNet':
         model = models.alexnet(weights=AlexNet_Weights.IMAGENET1K_V1)
         num_ftrs = model.classifier[6].in_features
         model.classifier[6] = nn.Linear(num_ftrs, classes)
 
-    # Spostare il modello sul dispositivo
     if platform.system() == 'Windows':
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     else:
@@ -193,11 +218,8 @@ if __name__ == "__main__":
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-    # Addestramento del modello
     model, metrics_df = train_model(model, dataloaders, criterion, optimizer, average, num_epochs=num_epochs, patience=patience)
 
-    # Salvataggio del modello migliore
     torch.save(model.state_dict(), f'{path_model}/best_model.pt')
 
-    # Salvataggio delle metriche
-    metrics_df.to_csv(f'results/{name_test}.csv', index=False)
+    metrics_df.to_csv(f'train_results/{name_test}.csv', index=False)

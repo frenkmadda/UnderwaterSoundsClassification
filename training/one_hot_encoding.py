@@ -5,17 +5,24 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
-import torch.nn.functional as F
-from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
-import numpy as np
+from sklearn.metrics import precision_score, recall_score, f1_score
 from tqdm import tqdm
 from torchvision import models, transforms
 from torchvision.models import GoogLeNet_Weights, AlexNet_Weights
 import platform
 
-from training import write_parameters_to_txt
+from training.training import write_parameters_to_txt
 
 class SpectrogramDataset(Dataset):
+    """
+    Class for loading spectrogram images and their labels from a CSV file
+
+    :param csv_file: path to the CSV file containing the file paths and labels
+    :param classes: number of classes
+    :param transform: optional transform to be applied on a sample.
+
+    :return: image, label
+    """
     def __init__(self, csv_file, classes, transform=None):
         self.classes = classes
 
@@ -34,7 +41,7 @@ class SpectrogramDataset(Dataset):
 
     def __getitem__(self, idx):
         img_name = self.data_frame.iloc[idx, 0]
-        image = Image.open(img_name).convert('RGB')  # Convertire l'immagine in RGB
+        image = Image.open(img_name).convert('RGB')
 
         label = int(self.data_frame.iloc[idx, 1])
         if self.classes != 2:
@@ -45,7 +52,21 @@ class SpectrogramDataset(Dataset):
 
         return image, label
 
-def train_model(model, dataloaders, criterion, optimizer, num_classes, num_epochs=25, patience=5):
+def train_model(model, dataloaders, criterion, optimizer,  average, num_classes, num_epochs=25, patience=5):
+    """
+    Train the model and apply early stopping.
+
+    :param model: The model to train
+    :param dataloaders: A dictionary containing the training and validation dataloaders
+    :param criterion: The loss function
+    :param optimizer: The optimizer for training the model
+    :param average: The type of averaging to use for the metrics
+    :param num_classes: The number of classes
+    :param num_epochs: The maximum number of epochs to train the model
+    :param patience: The number of epochs to wait before stopping training if the loss does not decrease
+
+    :return: The best model and a DataFrame containing the metrics for each epoch
+    """
     best_model_wts = model.state_dict()
     best_loss = float('inf')
     early_stopping_counter = 0
@@ -60,9 +81,9 @@ def train_model(model, dataloaders, criterion, optimizer, num_classes, num_epoch
 
         for phase in ['train', 'val']:
             if phase == 'train':
-                model.train()  # Imposta il modello in modalità training
+                model.train()
             else:
-                model.eval()  # Imposta il modello in modalità evaluation
+                model.eval()
 
             running_loss = 0.0
             running_corrects = 0
@@ -98,9 +119,9 @@ def train_model(model, dataloaders, criterion, optimizer, num_classes, num_epoch
 
             epoch_loss = running_loss / len(dataloaders[phase].dataset)
             epoch_acc = running_corrects.float() / len(dataloaders[phase].dataset)
-            precision = precision_score(all_labels, all_preds)
-            recall = recall_score(all_labels, all_preds)
-            f1 = f1_score(all_labels, all_preds)
+            precision = precision_score(all_labels, all_preds, average=average, zero_division=0)
+            recall = recall_score(all_labels, all_preds, average=average)
+            f1 = f1_score(all_labels, all_preds, average=average)
 
             print(f'{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f} Precision: {precision:.4f} Recall: {recall:.4f} F1: {f1:.4f}')
 
@@ -133,16 +154,16 @@ def train_model(model, dataloaders, criterion, optimizer, num_classes, num_epoch
 
 if __name__ == "__main__":
     # Parametri
-    train_csv_file = 'final_dataset/training/df_paths_train_clean.csv'
-    val_csv_file = 'final_dataset/validation/df_paths_val.csv'
-    name_test = 'test13_res_net_one_hot'
-    path_model = f'models/{name_test}'
-    batch_size = 64
+    train_csv_file = '../final_dataset/training/df_paths_train_clean.csv'
+    val_csv_file = '../final_dataset/validation/df_paths_val.csv'
+    name_test = 'test14_res_net_one_hot_unbalanced'
+    path_model = f'../models/{name_test}'
+    batch_size = 32
     num_epochs = 50
     patience = 5
     learning_rate = 0.001
     classes = 38  # 2 o 38
-    average = 'binary'
+    average = 'micro'
     model_used = 'resnet50'
     weights = 'IMAGENET1K_V1'
 
@@ -163,7 +184,6 @@ if __name__ == "__main__":
 
     write_parameters_to_txt(parameters, f'{path_model}/parameters.txt')
 
-    # Creazione dei dataset e dataloader con le trasformazioni necessarie
     data_transforms = {
         'train': transforms.Compose([
             transforms.Resize((224, 224)),
@@ -182,8 +202,8 @@ if __name__ == "__main__":
         'val': SpectrogramDataset(val_csv_file, classes, transform=data_transforms['val'])
     }
     dataloaders = {
-        'train': DataLoader(image_datasets['train'], batch_size=batch_size, shuffle=True, num_workers=4),
-        'val': DataLoader(image_datasets['val'], batch_size=batch_size, shuffle=False, num_workers=4)
+        'train': DataLoader(image_datasets['train'], batch_size=batch_size, shuffle=True, num_workers=4, persistent_workers=True),
+        'val': DataLoader(image_datasets['val'], batch_size=batch_size, shuffle=False, num_workers=4, persistent_workers=True)
     }
 
     if model_used == 'GoogLeNet':
@@ -199,7 +219,6 @@ if __name__ == "__main__":
         num_ftrs = model.fc.in_features
         model.fc = nn.Linear(num_ftrs, classes)
 
-    # Spostare il modello sul dispositivo
     if platform.system() == 'Windows':
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     else:
@@ -210,11 +229,8 @@ if __name__ == "__main__":
     criterion = nn.BCEWithLogitsLoss() if classes > 2 else nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-    # Addestramento del modello
-    model, metrics_df = train_model(model, dataloaders, criterion, optimizer, classes, num_epochs=num_epochs, patience=patience)
+    model, metrics_df = train_model(model, dataloaders, criterion, optimizer,  average, classes, num_epochs=num_epochs, patience=patience)
 
-    # Salvataggio del modello migliore
     torch.save(model.state_dict(), f'{path_model}/best_model.pt')
 
-    # Salvataggio delle metriche
-    metrics_df.to_csv(f'results/{name_test}.csv', index=False)
+    metrics_df.to_csv(f'train_results/{name_test}.csv', index=False)
