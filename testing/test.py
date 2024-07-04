@@ -8,8 +8,9 @@ import pandas as pd
 from tqdm import tqdm
 import platform
 from torchvision.models import AlexNet_Weights, GoogLeNet_Weights, ResNet50_Weights
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, precision_recall_curve, average_precision_score
 import csv
+import matplotlib.pyplot as plt
 
 def load_model(model_path, model_type, num_classes, device):
     """
@@ -39,7 +40,6 @@ def load_model(model_path, model_type, num_classes, device):
     model.eval()
     return model
 
-
 def process_image(image_path):
     """
     Process an image for model prediction.
@@ -56,7 +56,6 @@ def process_image(image_path):
     image = Image.open(image_path).convert('RGB')
     return transform(image).unsqueeze(0)
 
-
 def calculate_metrics(labels, outputs, average):
     """
     Calculate accuracy, precision, recall, and F1 score for the predictions.
@@ -72,7 +71,6 @@ def calculate_metrics(labels, outputs, average):
     recall = recall_score(labels, outputs, average=average, zero_division=1)
     f1 = f1_score(labels, outputs, average=average)
     return accuracy, precision, recall, f1
-
 
 def save_metrics(accuracy, precision, recall, f1, path):
     """
@@ -97,6 +95,25 @@ def save_metrics(accuracy, precision, recall, f1, path):
             'test_f1': f1
         })
 
+def save_predictions(targets, predicted_probs, path):
+    """
+    Save the true labels and predicted probabilities to a CSV file.
+
+    :param targets: It contains the true labels.
+    :param predicted_probs: It contains the predicted probabilities.
+    :param path: The path to save the CSV file.
+
+    :return: None
+    """
+    with open(path, 'w', newline='') as csvfile:
+        fieldnames = ['true_label', 'predicted_prob']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for true_label, predicted_prob in zip(targets, predicted_probs):
+            writer.writerow({
+                'true_label': true_label,
+                'predicted_prob': predicted_prob
+            })
 
 def get_device():
     """
@@ -108,7 +125,6 @@ def get_device():
         return torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     else:
         return torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-
 
 def test_model(model_path, model_type, average, num_classes, is_binary=True):
     """
@@ -128,6 +144,7 @@ def test_model(model_path, model_type, average, num_classes, is_binary=True):
     df = pd.read_csv(csv_path)
     predictions = []
     targets = []
+    predicted_probs = []
 
     for index, row in tqdm(df.iterrows(), total=len(df), desc="Testing"):
         image_path = os.path.join('../', row['FilePath'])
@@ -137,15 +154,23 @@ def test_model(model_path, model_type, average, num_classes, is_binary=True):
             outputs = model(image)
             _, predicted = torch.max(outputs, 1)
 
+            if is_binary:
+                prob = torch.softmax(outputs, dim=1)
+
         if is_binary:
             predicted_label = 1 if predicted.item() == 1 else 0
             target_label = 1 if row['Label'] == 'Target' else 0
+            predicted_prob = prob[0, 1].item()
         else:
             predicted_label = predicted.item()
             target_label = row['Classe']
 
+        if is_binary:
+            predicted_probs.append(predicted_prob)
+
         predictions.append(predicted_label)
         targets.append(target_label)
+
 
     if not is_binary:
         unique_labels = df['Classe'].unique()
@@ -154,6 +179,38 @@ def test_model(model_path, model_type, average, num_classes, is_binary=True):
 
     test_accuracy, test_precision, test_recall, test_f1 = calculate_metrics(targets, predictions, average)
     model_name = model_path.split('/')[2]
-    save_metrics(test_accuracy, test_precision, test_recall, test_f1, f'test_results/{model_name}.csv')
+    save_metrics(test_accuracy, test_precision, test_recall, test_f1, f'test_results/{model_name}_metrics.csv')
+
+    if is_binary:
+        save_predictions(targets, predicted_probs, f'test_results/{model_name}_predictions.csv')
+
     print(f'Accuracy: {test_accuracy:.4f} - Precision: {test_precision:.4f} - Recall: {test_recall:.4f} - F1: {test_f1:.4f}')
 
+
+def plot_precision_recall(csv_prediction_path):
+    """
+    Plots the precision-recall curve for the predictions in the CSV file.
+
+    :param csv_prediction_path: The path to the CSV file containing the predictions.
+
+    :return: None
+    """
+    data = pd.read_csv(csv_prediction_path)
+
+    true_labels = data['true_label']
+    predicted_probs = data['predicted_prob']
+
+    precision, recall, _ = precision_recall_curve(true_labels, predicted_probs)
+    average_precision = average_precision_score(true_labels, predicted_probs)
+
+    chance_level = sum(true_labels) / len(true_labels)
+
+    plt.figure()
+    plt.step(recall, precision, where='post', label='Precision-Recall curve')
+    plt.axhline(y=chance_level, color='r', linestyle='--', label='Chance level')
+
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.title(f'Precision-Recall curve: AP={average_precision:0.2f}')
+    plt.legend()
+    plt.show()
