@@ -648,3 +648,43 @@ def filter_csv(class_num_csv, csv_to_filter, output_di_file):
         df_paths['Classe'] = df_paths['FilePath'].apply(lambda x: x.split('/')[2])
     df_paths_filtered = df_paths[df_paths['Classe'].isin(df_filtered['Classe'])]
     df_paths_filtered.to_csv(output_di_file, index=False)
+
+
+def plot_metrics(file_path):
+    """
+    Plots training and validation metrics over epochs from a CSV file.
+
+    :param file_path: the path to the CSV file containing the metrics data.
+
+    :return: None
+    """
+    df = pd.read_csv(file_path)
+
+    # Numbers of metrics to plot (excluding 'epoch')
+    num_metrics = len([col for col in df.columns[1:] if 'train' in col])
+
+    # Number of rows and columns for the grid
+    num_rows = int(np.ceil(num_metrics / 2))
+    num_cols = 2
+
+    plt.figure(figsize=(9, 5 * num_rows))
+
+    # For each metric in the dataframe (excluding 'epoch')
+    for i, metric in enumerate(df.columns[1:], start=1):
+        if 'train' in metric:
+            plt.subplot(num_rows, num_cols, i)
+
+            plt.plot(df['epoch'], df[metric], label=metric, color='blue')
+
+            val_metric = metric.replace('train', 'val')
+            if val_metric in df.columns:
+                plt.plot(df['epoch'], df[val_metric], label=val_metric, color='red')
+
+            plt.xlabel('Epoch')
+            plt.ylabel(metric.split('_')[1])
+            plt.title(f'Train vs Validation {metric.split("_")[1]}')
+
+            plt.legend()
+
+    plt.tight_layout()
+    plt.show()
