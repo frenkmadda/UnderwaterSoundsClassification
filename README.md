@@ -1,5 +1,5 @@
 # UnderwaterSoundsClassification 
- A Project made for a course in Biometrics and Artficial Vision of the Data Science and Machine Learning Master Degree of the University of Salerno.
+ A Project made for a course in Biometrics and Artificial Vision of the Data Science and Machine Learning Master Degree of the University of Salerno.
  The project consists in studying and analyzing underwater audio data using spectograms.
 The first goal is to obtain a Binary classificator to distinguish Animal sounds from antropologic ones.
 The second goal is to obtain a multiclass classificator to distinguish the exact source of the sound.
